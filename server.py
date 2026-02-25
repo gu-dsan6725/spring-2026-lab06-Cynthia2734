@@ -7,6 +7,7 @@ An MCP server that exposes:
 
 Transport: Streamable HTTP on port 8765
 """
+
 import json
 import logging
 from pathlib import Path
@@ -15,7 +16,6 @@ from typing import Optional
 import httpx
 import polars as pl
 from mcp.server.fastmcp import FastMCP
-
 
 # =============================================================================
 # CONFIGURATION
@@ -43,6 +43,7 @@ mcp = FastMCP(
 # =============================================================================
 # PRIVATE HELPER FUNCTIONS
 # =============================================================================
+
 
 def _load_data() -> pl.DataFrame:
     """Load the World Bank indicators CSV file."""
@@ -84,6 +85,7 @@ def _fetch_world_bank_indicator(
 # PART 1: RESOURCES (Local Data)
 # =============================================================================
 
+
 @mcp.resource("data://schema")
 def get_schema() -> str:
     """
@@ -118,7 +120,8 @@ def get_countries() -> str:
     """
     df = _load_data()
     # TODO: Implement - return unique country codes and names as JSON string
-    pass
+    countries_info = df.select(["countryiso3code", "country"]).unique().to_dicts()
+    return json.dumps(countries_info, indent=2)
 
 
 @mcp.resource("data://indicators/{country_code}")
@@ -141,12 +144,16 @@ def get_country_indicators(country_code: str) -> str:
     """
     df = _load_data()
     # TODO: Implement - filter by country and return as JSON string
-    pass
+    country_data = df.filter(pl.col("countryiso3code") == country_code)
+    if country_data.is_empty():
+        return json.dumps({"error": f"No data found for country code: {country_code}"})
+    return json.dumps(country_data.to_dicts(), indent=2)
 
 
 # =============================================================================
 # PART 2: TOOLS (External APIs)
 # =============================================================================
+
 
 @mcp.tool()
 def get_country_info(country_code: str) -> dict:
@@ -186,7 +193,25 @@ def get_country_info(country_code: str) -> dict:
     """
     logger.info(f"Fetching country info for: {country_code}")
     # TODO: Implement using _fetch_rest_countries()
-    pass
+    try:
+        data = _fetch_rest_countries(country_code)
+        country_info = {
+            "name": data.get("name", {}).get("common"),
+            "capital": data.get("capital", [None])[0],
+            "region": data.get("region"),
+            "subregion": data.get("subregion"),
+            "languages": list(data.get("languages", {}).values()),
+            "currencies": list(data.get("currencies", {}).keys()),
+            "population": data.get("population"),
+            "flag": data.get("flag"),
+        }
+        return country_info
+    except Exception as e:
+        logger.error(f"Error fetching country info for {country_code}: {e}")
+        return {
+            "error": str(e),
+            "country_code": country_code,
+        }
 
 
 @mcp.tool()
@@ -227,7 +252,29 @@ def get_live_indicator(
     """
     logger.info(f"Fetching {indicator} for {country_code} in {year}")
     # TODO: Implement using _fetch_world_bank_indicator()
-    pass
+    try:
+        data = _fetch_world_bank_indicator(country_code, indicator, year)
+        if not data:
+            raise ValueError(f"No data found for {country_code}, {indicator} in {year}")
+        entry = data[0]
+        result = {
+            "country": entry.get("country", {}).get("id"),
+            "country_name": entry.get("country", {}).get("value"),
+            "indicator": entry.get("indicator", {}).get("id"),
+            "indicator_name": entry.get("indicator", {}).get("value"),
+            "year": entry.get("date"),
+            "value": entry.get("value"),
+        }
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching indicator for {country_code}: {e}")
+        return {
+            "country_code": country_code,
+            "indicator": indicator,
+            "year": year,
+            "value": None,
+            "error": str(e),
+        }
 
 
 @mcp.tool()
@@ -261,7 +308,25 @@ def compare_countries(
     """
     logger.info(f"Comparing {indicator} for countries: {country_codes}")
     # TODO: Implement - call get_live_indicator for each country
-    pass
+    results = []
+
+    for code in country_codes:
+        try:
+            result = get_live_indicator(code, indicator, year)
+            results.append(result)
+        except Exception as e:
+            logger.error(f"Error comparing {code}: {e}")
+            results.append(
+                {
+                    "country": code,
+                    "indicator": indicator,
+                    "year": year,
+                    "value": None,
+                    "error": str(e),
+                }
+            )
+
+    return results
 
 
 # =============================================================================
@@ -270,6 +335,8 @@ def compare_countries(
 
 if __name__ == "__main__":
     logger.info(f"Starting World Bank MCP Server on http://{HOST}:{PORT}/mcp")
-    logger.info(f"Connect with MCP Inspector or test client at http://{HOST}:{PORT}/mcp")
+    logger.info(
+        f"Connect with MCP Inspector or test client at http://{HOST}:{PORT}/mcp"
+    )
     logger.info("Press Ctrl+C to stop")
     mcp.run(transport="streamable-http")

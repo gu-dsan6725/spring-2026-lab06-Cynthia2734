@@ -14,10 +14,10 @@ By completing this lab, you will:
 
 You will build an MCP server called `world-bank-server` that exposes:
 
-| Part | Type | Description |
-|------|------|-------------|
-| **Part 1** | Resources | Read local World Bank indicator data from a CSV file |
-| **Part 2** | Tools | Fetch live data from REST Countries and World Bank APIs |
+| Part       | Type      | Description                                             |
+| ---------- | --------- | ------------------------------------------------------- |
+| **Part 1** | Resources | Read local World Bank indicator data from a CSV file    |
+| **Part 2** | Tools     | Fetch live data from REST Countries and World Bank APIs |
 
 When complete, an AI agent can ask questions like:
 - "What's the GDP per capita of Germany?"
@@ -28,10 +28,10 @@ When complete, an AI agent can ask questions like:
 
 This lab intentionally uses **both** local data (Resources) and API calls (Tools) to teach an important MCP design pattern:
 
-| | Resources (Local CSV) | Tools (API Calls) |
-|---|---|---|
-| **Data type** | Historical indicators (2000-2023) | Current country metadata |
-| **Example** | "GDP of USA in 2015" | "What's the capital of USA?" |
+|               | Resources (Local CSV)             | Tools (API Calls)            |
+| ------------- | --------------------------------- | ---------------------------- |
+| **Data type** | Historical indicators (2000-2023) | Current country metadata     |
+| **Example**   | "GDP of USA in 2015"              | "What's the capital of USA?" |
 
 **Why not just call the API every time?**
 
@@ -187,12 +187,12 @@ def get_live_indicator(country_code: str, indicator: str, year: int = 2022) -> d
 **API Endpoint:** `https://api.worldbank.org/v2/country/{code}/indicator/{indicator}?format=json`
 
 **Common Indicators:**
-| Indicator ID | Description |
-|--------------|-------------|
+| Indicator ID     | Description                  |
+| ---------------- | ---------------------------- |
 | `NY.GDP.PCAP.CD` | GDP per capita (current US$) |
-| `SP.POP.TOTL` | Total population |
-| `SP.DYN.LE00.IN` | Life expectancy at birth |
-| `SE.ADT.LITR.ZS` | Adult literacy rate |
+| `SP.POP.TOTL`    | Total population             |
+| `SP.DYN.LE00.IN` | Life expectancy at birth     |
+| `SE.ADT.LITR.ZS` | Adult literacy rate          |
 
 #### 3. `compare_countries(country_codes: list[str], indicator: str)`
 Compare an indicator across multiple countries.
@@ -446,13 +446,13 @@ Try these prompts:
 
 ## Grading Rubric
 
-| Component | Points | Criteria |
-|-----------|--------|----------|
-| **Resources (Part 1)** | 25 | All 3 resources implemented and return correct data |
-| **Tools (Part 2)** | 30 | All 3 tools implemented, API calls work correctly |
-| **Error Handling (Part 3)** | 15 | Graceful handling of invalid inputs, API failures |
-| **Code Quality** | 15 | Type hints, docstrings, follows course coding standards |
-| **Testing (Part 4)** | 15 | Test log file OR screenshots showing server works |
+| Component                   | Points | Criteria                                                |
+| --------------------------- | ------ | ------------------------------------------------------- |
+| **Resources (Part 1)**      | 25     | All 3 resources implemented and return correct data     |
+| **Tools (Part 2)**          | 30     | All 3 tools implemented, API calls work correctly       |
+| **Error Handling (Part 3)** | 15     | Graceful handling of invalid inputs, API failures       |
+| **Code Quality**            | 15     | Type hints, docstrings, follows course coding standards |
+| **Testing (Part 4)**        | 15     | Test log file OR screenshots showing server works       |
 
 **Total: 100 points**
 
@@ -481,14 +481,14 @@ Integrate your MCP server with an AI assistant and provide proof:
 
 Before submitting, verify:
 
-- [ ] Server starts without errors: `uv run python server.py`
-- [ ] All 3 resources return valid data
-- [ ] All 3 tools call external APIs successfully
-- [ ] Code follows course standards: `uv run ruff check .`
-- [ ] **Testing evidence included:**
-  - [ ] Option A: `test_results.log` file with passing tests, OR
-  - [ ] Option B: `screenshots/` folder with MCP Inspector screenshots
-- [ ] All changes committed and pushed to GitHub
+- [x] Server starts without errors: `uv run python server.py`
+- [x] All 3 resources return valid data
+- [x] All 3 tools call external APIs successfully
+- [x] Code follows course standards: `uv run ruff check .`
+- [x] **Testing evidence included:**
+  - [x] Option A: `test_results.log` file with passing tests, OR
+  - [x] Option B: `screenshots/` folder with MCP Inspector screenshots
+- [x] All changes committed and pushed to GitHub
 - [ ] **(Bonus)** Screenshots of AI assistant using your server
 
 ---
@@ -556,11 +556,11 @@ if __name__ == "__main__":
 
 ### Key Concepts
 
-| Decorator | Purpose | Return Type |
-|-----------|---------|-------------|
-| `@mcp.resource("uri://path")` | Expose read-only data | `str` (usually JSON) |
-| `@mcp.resource("uri://path/{param}")` | Parameterized resource | `str` |
-| `@mcp.tool()` | Expose callable function | `dict` or any JSON-serializable |
+| Decorator                             | Purpose                  | Return Type                     |
+| ------------------------------------- | ------------------------ | ------------------------------- |
+| `@mcp.resource("uri://path")`         | Expose read-only data    | `str` (usually JSON)            |
+| `@mcp.resource("uri://path/{param}")` | Parameterized resource   | `str`                           |
+| `@mcp.tool()`                         | Expose callable function | `dict` or any JSON-serializable |
 
 ### Transport Options
 
